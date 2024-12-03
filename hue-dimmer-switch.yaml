@@ -24,7 +24,7 @@ blueprint:
     brightness_step:
       name: Brightness Step
       description: Percentage to change brightness on each press
-      default: 30
+      default: 34
       selector:
         number:
           min: 1
@@ -68,12 +68,7 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_pct: >
-                {% if expand(target.area_id | map('area_entities') | sum(start=[]) | select('search', '^light\.')) | selectattr('state', 'eq', 'off') | list | count > 0 %}
-                1
-                {% else %}
-                {{ min(100, states(expand(target.area_id | map('area_entities') | sum(start=[]) | select('search', '^light\.') | first)) | float + 33) }}
-                {% endif %}
+              brightness_step_pct: "{{ brightness_step }}"
 
       # Brightness Down
       - conditions:
