@@ -68,7 +68,12 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_step_pct: !input brightness_step
+              brightness_pct: >
+                {% if expand(target.area_id | map('area_entities') | sum(start=[]) | select('search', '^light\.')) | selectattr('state', 'eq', 'off') | list | count > 0 %}
+                1
+                {% else %}
+                {{ min(100, states(expand(target.area_id | map('area_entities') | sum(start=[]) | select('search', '^light\.') | first)) | float + 33) }}
+                {% endif %}
 
       # Brightness Down
       - conditions:
