@@ -1,0 +1,94 @@
+blueprint:
+  name: Multi-Area Switch Control Hue dimmer switch
+  description: Control lights in multiple areas using a ZHA Hue Dimmer switch
+  domain: automation
+  input:
+    switch_device:
+      name: Switch Device
+      selector:
+        device: {}
+    areas:
+      name: Areas to Control
+      description: Select one or more areas to control
+      selector:
+        area:
+          multiple: true
+    automation_scripts:
+      name: Automations to Run (Optional)
+      description: Scripts to run when off button is double clicked
+      default: []
+      selector:
+        entity:
+          domain: script
+          multiple: true
+    brightness_step:
+      name: Brightness Step
+      description: Percentage to change brightness on each press
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 50
+          unit_of_measurement: "%"
+
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input switch_device
+      
+action:
+  - choose:
+      # On button
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.command == "on_press" }}'
+        sequence:
+          - service: light.turn_on
+            target:
+              area_id: !input areas
+            data:
+              brightness_pct: 100
+
+      # Off button
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.command == "off_short_release" }}'
+        sequence:
+          - service: light.turn_off
+            target:
+              area_id: !input areas
+
+      # Brightness Up
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.cluster_id == 8 and trigger.event.data.command == "step" and trigger.event.data.params.step_mode == 0 }}'
+        sequence:
+          - service: light.turn_on
+            target:
+              area_id: !input areas
+            data:
+              brightness_step_pct: !input brightness_step
+
+      # Brightness Down
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.cluster_id == 8 and trigger.event.data.command == "step" and trigger.event.data.params.step_mode == 1 }}'
+        sequence:
+          - service: light.turn_on
+            target:
+              area_id: !input areas
+            data:
+              brightness_step_pct: "{{ brightness_step * -1 }}"
+
+      # Off double click (for scripts)
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.event.data.command == "off_double" }}'
+        sequence:
+          - repeat:
+              for_each: !input automation_scripts
+              sequence:
+                - service: script.turn_on
+                  target:
+                    entity_id: "{{ repeat.item }}"
