@@ -1,5 +1,5 @@
 blueprint:
-  name: Multi-Area Switch Control Hue dimmer switch v. 0.3.2
+  name: Multi-Area Switch Control Hue dimmer switch v. 0.3.3
   description: Control lights in multiple areas using a ZHA Hue Dimmer switch
   domain: automation
   input:
@@ -24,7 +24,7 @@ blueprint:
     brightness_step:
       name: Brightness Step
       description: Percentage to change brightness on each press
-      default: 33
+      default: 30
       selector:
         number:
           min: 1
@@ -84,7 +84,7 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_step_pct: 34%
+              brightness_step_pct: "{{ brightness_step * -1 }}"
 
       # Off double click (for scripts)
       - conditions:
