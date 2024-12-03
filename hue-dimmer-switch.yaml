@@ -1,5 +1,5 @@
 blueprint:
-  name: Multi-Area Switch Control Hue dimmer switch v. 0.3.1
+  name: Multi-Area Switch Control Hue dimmer switch v. 0.3.2
   description: Control lights in multiple areas using a ZHA Hue Dimmer switch
   domain: automation
   input:
