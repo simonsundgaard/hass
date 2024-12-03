@@ -84,7 +84,7 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_step_pct: "{{ brightness_step * -1 }}"
+              brightness_step_pct: 34%
 
       # Off double click (for scripts)
       - conditions:
