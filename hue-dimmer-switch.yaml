@@ -1,6 +1,6 @@
 blueprint:
-  name: Multi-Area Switch Control Hue dimmer switch v0.3.3
-  description: Control lights in multiple areas using ZHA Hue Dimmer switch with smart brightness control
+  name: Multi-Area Switch Control Hue dimmer switch v0.3.9
+  description: Control lights in multiple areas using ZHA Hue Dimmer switch with discrete brightness levels
   domain: automation
   input:
     remote:
@@ -21,16 +21,6 @@ blueprint:
       selector:
         entity:
           domain: light
-    brightness_step:
-      name: Brightness Step
-      description: Percentage to change brightness on each up/down press
-      default: 30
-      selector:
-        number:
-          min: 1
-          max: 100
-          step: 1
-          unit_of_measurement: "%"
     automation_scripts:
       name: Automations to Run on Double-Click (Optional)
       description: Scripts to run when off button is double clicked
@@ -94,7 +84,7 @@ action:
                 target:
                   area_id: !input areas
                 data:
-                  brightness_step_pct: !input brightness_step
+                  brightness_pct: 50
 
       # Brightness Down
       - conditions:
@@ -105,7 +95,7 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_step_pct: -50
+              brightness_pct: 1
 
       # Off double click (for scripts)
       - conditions:
