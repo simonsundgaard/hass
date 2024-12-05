@@ -1,6 +1,6 @@
 blueprint:
-  name: Multi-Area Switch Control Hue dimmer switch v0.3.9
-  description: Control lights in multiple areas using ZHA Hue Dimmer switch with discrete brightness levels
+  name: Multi-Area Switch Control Hue dimmer switch v0.4.3
+  description: Control lights in multiple areas using ZHA Hue Dimmer switch with configurable brightness levels and transition time
   domain: automation
   input:
     remote:
@@ -15,15 +15,62 @@ blueprint:
       selector:
         area:
           multiple: true
-    light_entity:
-      name: Primary Light
-      description: Used to check light state for smart brightness control
+    brightness_down:
+      name: Down Button Brightness
+      description: Brightness level when pressing down button
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+          step: 1
+    brightness_up:
+      name: Up Button Brightness
+      description: Brightness level when pressing up button
+      default: 50
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+          step: 1
+    brightness_on:
+      name: On Button Brightness
+      description: Brightness level when pressing on button
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+          step: 1
+    transition_time:
+      name: Transition Time
+      description: Time in seconds to transition between brightness levels
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          unit_of_measurement: "seconds"
+          mode: slider
+          step: 0.1
+    automation_scripts_for_off:
+      name: Automations to Run on Double-Click off (Optional)
+      description: Scripts to run when off button is double clicked
+      default: []
       selector:
         entity:
-          domain: light
-    automation_scripts:
-      name: Automations to Run on Double-Click (Optional)
-      description: Scripts to run when off button is double clicked
+          domain: script
+          multiple: true
+    
+    automation_scripts_for_on:
+      name: Automations to Run on Double-Click on (Optional)
+      description: Scripts to run when on button is double clicked
       default: []
       selector:
         entity:
@@ -51,8 +98,8 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_pct: 100
-              transition: 1
+              brightness_pct: !input brightness_on
+              transition: !input transition_time
 
       # Off button
       - conditions:
@@ -62,31 +109,22 @@ action:
           - service: light.turn_off
             target:
               area_id: !input areas
+            data:
+              transition: !input transition_time
 
-      # Brightness Up
+      # Up button
       - conditions:
           - condition: template
             value_template: '{{ command == "up_press" }}'
         sequence:
-          - choose:
-              - conditions:
-                  - condition: state
-                    entity_id: !input light_entity
-                    state: 'off'
-                sequence:
-                  - service: light.turn_on
-                    target:
-                      area_id: !input areas
-                    data:
-                      brightness_pct: 1
-            default:
-              - service: light.turn_on
-                target:
-                  area_id: !input areas
-                data:
-                  brightness_pct: 50
+          - service: light.turn_on
+            target:
+              area_id: !input areas
+            data:
+              brightness_pct: !input brightness_up
+              transition: !input transition_time
 
-      # Brightness Down
+      # Down button
       - conditions:
           - condition: template
             value_template: '{{ command == "down_press" }}'
@@ -95,15 +133,28 @@ action:
             target:
               area_id: !input areas
             data:
-              brightness_pct: 1
+              brightness_pct: !input brightness_down
+              transition: !input transition_time
 
       # Off double click (for scripts)
       - conditions:
           - condition: template
-            value_template: '{{ command == "off_double" }}'
+            value_template: '{{ command == "off_double_press" }}'
         sequence:
           - repeat:
-              for_each: !input automation_scripts
+              for_each: !input automation_scripts_for_off
+              sequence:
+                - service: script.turn_on
+                  target:
+                    entity_id: "{{ repeat.item }}"
+      
+      # On double click (for scripts)
+      - conditions:
+          - condition: template
+            value_template: '{{ command == "on_double_press" }}'
+        sequence:
+          - repeat:
+              for_each: !input automation_scripts_for_on
               sequence:
                 - service: script.turn_on
                   target:
